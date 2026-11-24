@@ -9,6 +9,8 @@ const DIRS = {
   down: { x: 0, y: 1 },
 };
 const OPPOSITE = { left: 'right', right: 'left', up: 'down', down: 'up' };
+// Prioridad clasica de desempate al elegir direccion: up > left > down > right.
+const DIR_PRIORITY = [ 'up', 'left', 'down', 'right' ];
 
 const PACMAN_SPEED = 0.125; // 1/8 celda/frame -> alinea cada 8 frames
 const GHOST_SPEED = 0.1;    // 1/10 celda/frame
@@ -112,9 +114,49 @@ function movePacman( game ) {
   wrapTunnel( p, width );
 }
 
+// Objetivo (celda) de cada fantasma segun su personalidad clasica.
+// Puede caer fuera del laberinto (p. ej. Pinky/Inky): solo se usa para
+// comparar distancias Manhattan, nunca para indexar la cuadricula.
+function ghostTarget( game, g ) {
+  const p = game.pacman;
+  const px = Math.round( p.x );
+  const py = Math.round( p.y );
+
+  if ( g.kind === 'blinky' ) {
+    return { x: px, y: py }; // persigue directo la celda de Pac-Man
+  }
+
+  if ( g.kind === 'pinky' ) {
+    // 4 celdas por delante de la direccion de Pac-Man (objetivo ideal,
+    // sin el bug historico del arcade).
+    const d = DIRS[ p.dir ];
+    return { x: px + d.x * 4, y: py + d.y * 4 };
+  }
+
+  if ( g.kind === 'inky' ) {
+    // Flanqueo: reflejo de Blinky respecto al punto 2 celdas delante
+    // de Pac-Man (pivot * 2 - blinky).
+    const d = DIRS[ p.dir ];
+    const ax = px + d.x * 2;
+    const ay = py + d.y * 2;
+    const blinky = game.ghosts.find( ( gh ) => gh.kind === 'blinky' ) || g;
+    return { x: ax * 2 - Math.round( blinky.x ), y: ay * 2 - Math.round( blinky.y ) };
+  }
+
+  if ( g.kind === 'clyde' ) {
+    // Persigue a mas de 8 celdas; a 8 o menos huye hacia la esquina
+    // inferior izquierda (1,29).
+    const dist = Math.abs( g.x - px ) + Math.abs( g.y - py );
+    if ( dist <= 8 ) return { x: 1, y: 29 };
+    return { x: px, y: py };
+  }
+
+  // kind desconocido: comportarse como blinky.
+  return { x: px, y: py };
+}
+
 function decideGhost( game, g ) {
   const grid = game.grid;
-  const p = game.pacman;
 
   // Salida escalonada de la guarida: esperar penFrames, caminar hasta la
   // columna 13, subir atravesando la puerta y marcarse liberado en (13,11).
@@ -135,31 +177,29 @@ function decideGhost( game, g ) {
     return;
   }
 
-  const options = Object.keys( DIRS ).filter(
+  const options = DIR_PRIORITY.filter(
     ( dir ) => dir !== OPPOSITE[ g.dir ] && canMove( grid, g.x, g.y, dir, 'ghost' )
   );
   // Sin salida (callejon): permitir el giro de 180.
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
 
-  if ( g.kind === 'hunter' ) {
-    const px = Math.round( p.x );
-    const py = Math.round( p.y );
-    let best = choices[ 0 ];
-    let bestDist = Infinity;
-    for ( const dir of choices ) {
-      const d = DIRS[ dir ];
-      const nx = g.x + d.x;
-      const ny = g.y + d.y;
-      const dist = Math.abs( nx - px ) + Math.abs( ny - py );
-      if ( dist < bestDist ) {
-        bestDist = dist;
-        best = dir;
-      }
+  // Direccion valida que minimiza la distancia Manhattan al objetivo del
+  // kind. Se recorre en orden DIR_PRIORITY y solo se mejora con '<'
+  // estricto, asi el desempate es el clasico: up > left > down > right.
+  const t = ghostTarget( game, g );
+  let best = choices[ 0 ];
+  let bestDist = Infinity;
+  for ( const dir of choices ) {
+    const d = DIRS[ dir ];
+    const nx = g.x + d.x;
+    const ny = g.y + d.y;
+    const dist = Math.abs( nx - t.x ) + Math.abs( ny - t.y );
+    if ( dist < bestDist ) {
+      bestDist = dist;
+      best = dir;
     }
-    g.dir = best;
-  } else {
-    g.dir = choices[ Math.floor( Math.random() * choices.length ) ];
   }
+  g.dir = best;
 }
 
 function moveGhost( game, g ) {
