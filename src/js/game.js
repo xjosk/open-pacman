@@ -42,6 +42,8 @@ function createGame() {
       dir: 'up',
       speed: GHOST_SPEED,
       kind: g.kind,
+      released: g.releaseDelay === 0, // blinky arranca fuera de la guarida
+      penFrames: g.releaseDelay, // frames restantes antes de iniciar la salida
     } ) ),
   };
 }
@@ -114,6 +116,25 @@ function decideGhost( game, g ) {
   const grid = game.grid;
   const p = game.pacman;
 
+  // Salida escalonada de la guarida: esperar penFrames, caminar hasta la
+  // columna 13, subir atravesando la puerta y marcarse liberado en (13,11).
+  // (decideGhost solo se llama con el fantasma alineado: x e y son enteros.)
+  if ( !g.released ) {
+    if ( g.penFrames > 0 ) {
+      g.penFrames--;
+      g.dir = null; // quieto: canMove devuelve false y moveGhost no avanza
+      return;
+    }
+    if ( g.x === 13 && g.y === 11 ) {
+      g.released = true; // ya esta fuera, sobre la puerta
+      return;
+    }
+    if ( g.x < 13 ) g.dir = 'right';
+    else if ( g.x > 13 ) g.dir = 'left';
+    else g.dir = 'up';
+    return;
+  }
+
   const options = Object.keys( DIRS ).filter(
     ( dir ) => dir !== OPPOSITE[ g.dir ] && canMove( grid, g.x, g.y, dir, 'ghost' )
   );
@@ -165,9 +186,12 @@ function resetPositions( game ) {
   p.dir = 'left';
   p.nextDir = null;
   game.ghosts.forEach( ( g, i ) => {
-    g.x = GHOST_STARTS[ i ].x;
-    g.y = GHOST_STARTS[ i ].y;
+    const start = GHOST_STARTS[ i ];
+    g.x = start.x;
+    g.y = start.y;
     g.dir = 'up';
+    g.released = start.releaseDelay === 0; // blinky vuelve a quedar fuera
+    g.penFrames = start.releaseDelay; // los demas vuelven a esperar
   } );
 }
 
