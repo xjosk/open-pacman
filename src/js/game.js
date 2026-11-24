@@ -55,14 +55,17 @@ function aligned( v ) {
 }
 
 // Una celda es muro para el actor dado?
-//   pacman: bloqueado por pared (1) y puerta (3)
-//   ghost:  bloqueado solo por pared (1)
+//   actor: 'pacman' | objeto fantasma g
+//   pared (1): muro para todos.
+//   puerta (3): muro para Pac-Man y para todo fantasma ya liberado (un
+//               liberado nunca reentra a la guarida); pasable para el que
+//               aun esta saliendo (released === false).
 function isWall( grid, x, y, actor ) {
   if ( y < 0 || y >= grid.length ) return true;
   if ( x < 0 || x >= grid[ 0 ].length ) return true;
   const v = grid[ y ][ x ];
   if ( v === 1 ) return true;
-  if ( v === 3 && actor === 'pacman' ) return true;
+  if ( v === 3 && ( actor === 'pacman' || actor.released ) ) return true;
   return false;
 }
 
@@ -168,17 +171,22 @@ function decideGhost( game, g ) {
       return;
     }
     if ( g.x === 13 && g.y === 11 ) {
-      g.released = true; // ya esta fuera, sobre la puerta
+      // Ya esta fuera, sobre la puerta: liberarse y caer en este mismo tic
+      // a la logica de persecucion, sin conservar la 'up' heredada (arriba
+      // hay pared). Sin direccion previa, la puerta de abajo se descarta
+      // sola: ya es muro para un fantasma liberado.
+      g.released = true;
+      g.dir = null;
+    } else {
+      if ( g.x < 13 ) g.dir = 'right';
+      else if ( g.x > 13 ) g.dir = 'left';
+      else g.dir = 'up';
       return;
     }
-    if ( g.x < 13 ) g.dir = 'right';
-    else if ( g.x > 13 ) g.dir = 'left';
-    else g.dir = 'up';
-    return;
   }
 
   const options = DIR_PRIORITY.filter(
-    ( dir ) => dir !== OPPOSITE[ g.dir ] && canMove( grid, g.x, g.y, dir, 'ghost' )
+    ( dir ) => dir !== OPPOSITE[ g.dir ] && canMove( grid, g.x, g.y, dir, g )
   );
   // Sin salida (callejon): permitir el giro de 180.
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
@@ -210,7 +218,7 @@ function moveGhost( game, g ) {
     g.x = Math.round( g.x );
     g.y = Math.round( g.y );
     decideGhost( game, g );
-    if ( !canMove( grid, g.x, g.y, g.dir, 'ghost' ) ) return;
+    if ( !canMove( grid, g.x, g.y, g.dir, g ) ) return;
   }
 
   const d = DIRS[ g.dir ];
