@@ -171,13 +171,18 @@ function decideGhost( game, g ) {
       return;
     }
     if ( g.x === 13 && g.y === 11 ) {
-      g.released = true; // ya esta fuera, sobre la puerta
+      // Ya esta fuera, sobre la puerta: liberarse y caer en este mismo tic
+      // a la logica de persecucion, sin conservar la 'up' heredada (arriba
+      // hay pared). Sin direccion previa, la puerta de abajo se descarta
+      // sola: ya es muro para un fantasma liberado.
+      g.released = true;
+      g.dir = null;
+    } else {
+      if ( g.x < 13 ) g.dir = 'right';
+      else if ( g.x > 13 ) g.dir = 'left';
+      else g.dir = 'up';
       return;
     }
-    if ( g.x < 13 ) g.dir = 'right';
-    else if ( g.x > 13 ) g.dir = 'left';
-    else g.dir = 'up';
-    return;
   }
 
   const options = DIR_PRIORITY.filter(
