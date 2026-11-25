@@ -1,6 +1,6 @@
 # SPEC 03 — Puerta de la guarida de un solo sentido
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Dependencias:** SPEC 01
 > **Fecha:** 2026-11-24
 > **Objetivo:** Que ningún fantasma liberado pueda volver a entrar a la guaria por la puerta, eliminando el atasco por el que re-entraba persiguiendo a Pac-Man y quedaba oscilando dentro.

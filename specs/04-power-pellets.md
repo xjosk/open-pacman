@@ -1,6 +1,6 @@
 # SPEC 04 — Power pellets en las esquinas
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Dependencias:** ninguna
 > **Fecha:** 2026-11-24
 > **Objetivo:** Añadir cuatro power pellets parpadeantes en las posiciones clásicas de las esquinas del laberinto, que dan 50 puntos al comerlos y cuentan para ganar la partida.

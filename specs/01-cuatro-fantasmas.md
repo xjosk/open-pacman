@@ -1,6 +1,6 @@
 # SPEC 01 — Cuatro fantasmas con personalidades clásicas
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Dependencias:** ninguna
 > **Fecha:** 2026-11-24
 > **Objetivo:** Tener cuatro fantasmas con las personalidades clásicas del arcade — Blinky persigue agresivamente a Pac-Man — con salida escalonada de la guarida.
