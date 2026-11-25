@@ -19,7 +19,7 @@ They communicate **only via `window` globals** — no ES modules, no imports. Ad
 
 ## Data-model gotchas
 
-- Tile codes: `0` empty path, `1` wall, `2` dot, `3` pen door (blocks Pac-Man, passable by ghosts).
+- Tile codes: `0` empty path, `1` wall, `2` dot, `3` pen door (blocks Pac-Man, passable by ghosts), `4` power pellet (bigger, blinks, worth 50 points, counts toward victory like a dot).
 - `MAZE` (from `maze.js`) is the pristine 28×31 template — never mutate it. `createGame()` copies it into `game.grid` per game; dots are eaten by mutating `game.grid`. Render from `game.grid`, not `MAZE`.
 - `TILE = 20` (render.js) ties maze dims to the hardcoded canvas size in `index.html` (28×20 = 560 wide, 31×20 = 620 high). Changing maze geometry or `TILE` requires updating the canvas attributes too.
 - Row 14 is the tunnel: actors exiting the left/right edge wrap around (`wrapTunnel`).

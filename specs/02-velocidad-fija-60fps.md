@@ -1,6 +1,6 @@
 # SPEC 02 — Velocidad de juego estable a 60 tics/s
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Dependencias:** ninguna
 > **Fecha:** 2026-11-24
 > **Objetivo:** Que la lógica del juego corra a 60 tics por segundo, idénticos en cualquier navegador y tasa de refresco, eliminando la aceleración actual en monitores de 120 Hz o más.
