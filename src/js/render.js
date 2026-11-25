@@ -5,6 +5,9 @@ const TILE = 20;
 const WALL_COLOR = '#2121ff';
 const DOOR_COLOR = '#ffb8ff';
 const DOT_COLOR = '#ffb897';
+// Power pellets (SPEC 04): dots grandes que parpadean con tics de logica.
+const PELLET_RADIUS = 7;        // el dot comun usa 2.5
+const PELLET_BLINK_TICS = 10;   // ~0,17 s visibles / ~0,17 s ocultos a 60 tics/s
 
 function cellCenter( x, y ) {
   return { cx: x * TILE + TILE / 2, cy: y * TILE + TILE / 2 };
@@ -74,6 +77,23 @@ function drawDots( ctx, grid ) {
       const { cx, cy } = cellCenter( x, y );
       ctx.beginPath();
       ctx.arc( cx, cy, 2.5, 0, Math.PI * 2 );
+      ctx.fill();
+    }
+  }
+}
+
+// Power pellets (tile 4): circulos grandes visibles solo durante la mitad
+// del ciclo. frame son tics de logica (60/s), asi el ritmo de parpadeo no
+// depende de la tasa de refresco del monitor.
+function drawPellets( ctx, grid, frame ) {
+  if ( Math.floor( frame / PELLET_BLINK_TICS ) % 2 === 1 ) return; // fase oculta
+  ctx.fillStyle = DOT_COLOR;
+  for ( let y = 0; y < grid.length; y++ ) {
+    for ( let x = 0; x < grid[ 0 ].length; x++ ) {
+      if ( grid[ y ][ x ] !== 4 ) continue;
+      const { cx, cy } = cellCenter( x, y );
+      ctx.beginPath();
+      ctx.arc( cx, cy, PELLET_RADIUS, 0, Math.PI * 2 );
       ctx.fill();
     }
   }
@@ -163,6 +183,7 @@ function draw( ctx, game, frame ) {
   drawWalls( ctx, grid );
   drawDoor( ctx, grid );
   drawDots( ctx, grid );
+  drawPellets( ctx, grid, frame );
   drawPacman( ctx, game.pacman, frame );
   game.ghosts.forEach( ( g ) => drawGhost( ctx, g, GHOST_COLORS[ g.kind ] || '#ff0000' ) );
   drawHUD( ctx, game, W );
